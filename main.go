@@ -8,49 +8,14 @@ import (
 	"os"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Party struct {
-	Name      string
-	Shorthand string
-	List_vote bool
-}
-
-type Candidate struct {
-	Position    int
-	Name        string
-	Party       string
-	Votes       int
-	Crossed_out bool
-}
-
 func main() {
 
-	// Set client options
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	ConnectToServer()
 
-	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Check the connection
-	err = client.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer client.Disconnect(context.TODO())
-
-	defer fmt.Println("Connection to MongoDB closed.")
-
-	fmt.Println("Willkommen beim EasyAhab Wahlunterstützungsprogramm!")
-
-	partiesCollection := client.Database("easyahab").Collection("parties")
-	candidatesCollection := client.Database("easyahab").Collection("candidates")
+	defer Disconnect()
 
 	for {
 		fmt.Println("Drücken Sie [P], um eine Partei anzulegen")
@@ -61,23 +26,8 @@ func main() {
 		var input string
 		fmt.Scanln(&input)
 		if input == "P" || input == "p" {
-			//add party
-			fmt.Println("Bitte Namen der Partei eingeben: ")
-			scanner := bufio.NewScanner(os.Stdin)
-			scanner.Scan() // use `for scanner.Scan()` to keep reading
-			party_name := scanner.Text()
-			fmt.Println("Bitte Kurzform eingeben: ")
-			var shorthand string
-			fmt.Scanln(&shorthand)
-
-			new_party := Party{party_name, shorthand, false}
-
-			insertResult, err := partiesCollection.InsertOne(context.TODO(), new_party)
-			if err != nil {
-				fmt.Println("Da ist was schief gelaufen!")
-				continue
-			}
-			fmt.Println("Inserted a single document: ", insertResult.InsertedID)
+			//CheckServerConnection()
+			AddParty()
 
 		} else if input == "K" || input == "k" {
 			//add candidate
@@ -91,7 +41,7 @@ func main() {
 			fmt.Scanln(&for_party)
 
 			var party_check bson.M
-			if err = partiesCollection.FindOne(context.TODO(), bson.M{"shorthand": for_party}).Decode(&party_check); err != nil {
+			if err := PartiesCollection.FindOne(context.TODO(), bson.M{"shorthand": for_party}).Decode(&party_check); err != nil {
 				fmt.Println("Da ist was schief gelaufen!")
 				continue
 			}
@@ -102,7 +52,7 @@ func main() {
 
 			new_candidate := Candidate{position, candidate_name, for_party, 0, false}
 
-			insertResultC, err := candidatesCollection.InsertOne(context.TODO(), new_candidate)
+			insertResultC, err := CandidatesCollection.InsertOne(context.TODO(), new_candidate)
 			if err != nil {
 				fmt.Println("Da ist was schief gelaufen!")
 				continue
@@ -127,7 +77,7 @@ func main() {
 					var cast int
 					fmt.Scanln(&cast)
 					var cast_check bson.M
-					if err = candidatesCollection.FindOne(context.TODO(), bson.M{"position": cast}).Decode(&cast_check); err != nil {
+					if err := CandidatesCollection.FindOne(context.TODO(), bson.M{"position": cast}).Decode(&cast_check); err != nil {
 						fmt.Println("Da ist was schief gelaufen!")
 						continue
 					}
@@ -156,7 +106,7 @@ func main() {
 					// 	}
 					// }
 
-					updateResult, err := candidatesCollection.UpdateOne(context.TODO(), filter, update)
+					updateResult, err := CandidatesCollection.UpdateOne(context.TODO(), filter, update)
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -168,11 +118,11 @@ func main() {
 					var cross int
 					fmt.Scanln(&cross)
 					var cross_check bson.M
-					if err = candidatesCollection.FindOne(context.TODO(), bson.M{"position": cross}).Decode(&cross_check); err != nil {
+					if err := CandidatesCollection.FindOne(context.TODO(), bson.M{"position": cross}).Decode(&cross_check); err != nil {
 						fmt.Println("Da ist was schief gelaufen!")
 						continue
 					}
-					result, err := candidatesCollection.UpdateOne(
+					result, err := CandidatesCollection.UpdateOne(
 						context.TODO(),
 						bson.M{"position": cross},
 						bson.D{
@@ -192,12 +142,12 @@ func main() {
 					var list string
 					fmt.Scanln(&list)
 					var list_check Party
-					if err = partiesCollection.FindOne(context.TODO(), bson.M{"shorthand": list}).Decode(&list_check); err != nil {
+					if err := PartiesCollection.FindOne(context.TODO(), bson.M{"shorthand": list}).Decode(&list_check); err != nil {
 						fmt.Println("Da ist was schief gelaufen!")
 						continue
 					}
 					fmt.Println(list_check.List_vote)
-					result, err := partiesCollection.UpdateOne(
+					result, err := PartiesCollection.UpdateOne(
 						context.TODO(),
 						bson.M{"shorthand": list},
 						bson.M{
@@ -213,7 +163,7 @@ func main() {
 				} else if i2 == "V" || i2 == "v" {
 					fmt.Println("Sie haben bei folgender Partei ein Listenkreuz gesetzt:")
 					var party_vote bson.M
-					if err = partiesCollection.FindOne(context.TODO(), bson.M{"list_vote": true}).Decode(&party_vote); err != nil {
+					if err := PartiesCollection.FindOne(context.TODO(), bson.M{"list_vote": true}).Decode(&party_vote); err != nil {
 						log.Fatal(err)
 					}
 					fmt.Println(party_vote)
@@ -222,7 +172,7 @@ func main() {
 					fmt.Println("Folgende Kandidat*innen sind von der Listenwahl ausgeschlossen")
 					opts_c := options.Find()
 					opts_c.SetSort(bson.D{{"position", 1}})
-					sortCursor, err := candidatesCollection.Find(context.TODO(), bson.D{
+					sortCursor, err := CandidatesCollection.Find(context.TODO(), bson.D{
 						{"votes", bson.D{
 							{"$gt", 0},
 						}},
@@ -237,7 +187,7 @@ func main() {
 					fmt.Println("Sie haben für folgende Kandidat*innen gestimmt:")
 					opts := options.Find()
 					opts.SetSort(bson.D{{"position", 1}})
-					sortCursorC, err := candidatesCollection.Find(context.TODO(), bson.D{
+					sortCursorC, err := CandidatesCollection.Find(context.TODO(), bson.D{
 						{"votes", bson.D{
 							{"$gt", 0},
 						}},
@@ -265,41 +215,7 @@ func main() {
 
 		} else if input == "V" || input == "v" {
 			// alle Personenstimmen auf Null Setzen
-			reset_v, err := candidatesCollection.UpdateMany(
-				context.TODO(),
-				bson.M{},
-				bson.D{
-					{"$set", bson.D{{"votes", 0}}},
-				},
-			)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Printf("Updated %v Documents!\n", reset_v.ModifiedCount)
-			// alle Streichungen löschen
-			reset_c, err := candidatesCollection.UpdateMany(
-				context.TODO(),
-				bson.M{},
-				bson.D{
-					{"$set", bson.D{{"crossed_out", false}}},
-				},
-			)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Printf("Updated %v Documents!\n", reset_c.ModifiedCount)
-			// alle Listenkreuze löschen
-			reset_l, err := partiesCollection.UpdateMany(
-				context.TODO(),
-				bson.M{},
-				bson.D{
-					{"$set", bson.D{{"list_vote", false}}},
-				},
-			)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Printf("Updated %v Documents!\n", reset_l.ModifiedCount)
+
 			break
 		}
 	}
