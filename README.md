@@ -6,4 +6,9 @@ This saves ressources, as the ballots do not need to be printed beforehand. Also
 Also the counting process is much easier, since the election assistants only have to deal with Din A4 sheets of paper with only the exact information they need to count the votes.
 
 In the current state (April 26), the program is soely text based and the "candidates" are Songs in order to make them easier to differenciate.
-The Goal is to import a MongoDB Database that has all the information stored.
+The Goal is to import a MongoDB Database that has all the information stored. Therefore all Candidates and Parties are a hardcoded
+
+To do:
+- use MongoDB as a Database in the background
+- GUI
+- export ballot as a pdf-file
