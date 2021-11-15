@@ -1,130 +1,114 @@
 package main
 
 import (
-	"fmt"
 	"sort"
 )
 
-func PersonVote() {
-	fmt.Println("Wen möchten Sie Wählen? Bitte geben Sie den Listenplatz an.")
-	var cast int
-	fmt.Scanln(&cast)
+func PersonVote(needle int) {
+	sort.Slice(Field, func(i, j int) bool { // I don't really know how this works.
+		return Field[i].Number <= Field[j].Number // It just does.
+	}) //
+	idx := sort.Search(len(Field), func(i int) bool { //
+		return int(Field[i].Number) >= needle //
+	}) //
 
-	sort.Slice(Field, func(i, j int) bool {
-		return Field[i].Number <= Field[j].Number
-	})
-
-	needle := cast
-	idx := sort.Search(len(Field), func(i int) bool {
-		return int(Field[i].Number) >= needle
-	})
-
-	if Field[idx].Number == needle && Field[idx].Crossed_out {
-		fmt.Println("Sie haben", Field[idx].Name, "bereits von der Listenwahl ausgeschlossen. Was möchten Sie tun?")
-		fmt.Println("Drücken Sie [F], um", Field[idx].Name, "eine Stimme zu geben und wieder bei der Listenwahl zu berücksichtigen.")
-		fmt.Println("Drücken Sie [A], um den Vorgang abzubrechen.")
-		var vi2 string
-		fmt.Scanln(&vi2)
-
-		if vi2 == "F" || vi2 == "f" {
-			Field[idx].Crossed_out = false
-			Field[idx].Votes += 1
-			Votes_left -= 1
-		}
+	if Field[idx].Number == needle && Field[idx].CrossedOut {
+		Field[idx].CrossedOut = false
+		Field[idx].Votes = 1
+		VotesLeft -= 1
 
 	} else if Field[idx].Number == needle && Field[idx].Votes < 3 {
 		Field[idx].Votes += 1
-		fmt.Println("Sie haben", Field[idx].Name, "eine Stimme gegeben.")
-		fmt.Println(Field[idx].Name, "hat jetzt", Field[idx].Votes, "Stimmen")
-		Votes_left -= 1
+		VotesLeft -= 1
 
 	} else if Field[idx].Number == needle && Field[idx].Votes == 3 {
-		fmt.Println(Field[idx].Name, "hat bereits drei Stimmen. Was möchten Sie tun?")
-		fmt.Println("Drücken Sie [0], um die Stimmen von", Field[idx].Votes, "auf 0 zu setzen.")
-		fmt.Println("Drücken Sie [A] um den Vorgang abzubrechen.")
-		var vi1 string
-		fmt.Scanln(&vi1)
+		Field[idx].Votes = 0
+		VotesLeft += 3
 
-		if vi1 == "0" {
-			Field[idx].Votes = 0
-			Votes_left += 3
-		}
-
-	} else {
-		fmt.Println("Found noting: ", idx)
 	}
+	Rot(Field[idx].List)
+	Braun()
 
 }
 
-func CrossCandidateOut() {
-	fmt.Println("Wen möchten Sie von der Listenwahl ausschließen? Bitte geben Sie den Listenplatz an.")
-	var cast int
-	fmt.Scanln(&cast)
-
+func ReduceVote(needle int) {
 	sort.Slice(Field, func(i, j int) bool {
 		return Field[i].Number <= Field[j].Number
 	})
-
-	needle := cast
 	idx := sort.Search(len(Field), func(i int) bool {
 		return int(Field[i].Number) >= needle
 	})
-	if Field[idx].Number == needle && Field[idx].Votes > 0 {
-		fmt.Println("Sie haben", Field[idx].Name, "bereits", Field[idx].Votes, "gegeben. Was möchten Sie tun?")
-		fmt.Println("Drücken Sie [F], um fortzufahren und", Field[idx].Name, "von der Listenwahl auszuschließen.")
-		fmt.Println("Sie können anschließend", Field[idx].Votes, "Stimmen neu vergeben.")
-		fmt.Println("Drücken Sie [A], um den Vorgang abzubrechen.")
-		var cast2 string
-		fmt.Scanln(&cast2)
 
-		if cast2 == "F" || cast2 == "f" {
-			Field[idx].Crossed_out = true
-			Votes_left += Field[idx].Votes
-		}
-	} else if Field[idx].Number == needle {
-		Field[idx].Crossed_out = !Field[idx].Crossed_out
-		fmt.Println(Field[idx])
+	if Field[idx].Number == needle && Field[idx].Votes > 0 {
+		Field[idx].Votes -= 1
+		VotesLeft += 1
 	}
+	Rot(Field[idx].List)
+	Braun()
 }
 
-func ListVote() {
-	fmt.Println("Welche Partei oder Wähler*innengruppe möchten Sie wählen? Bitte geben Sie das Kürzel an.")
-	var cast string
-	fmt.Scanln(&cast)
+func CrossCandidateOut(needle int) {
+	sort.Slice(Field, func(i, j int) bool {
+		return Field[i].Number <= Field[j].Number
+	})
+	idx := sort.Search(len(Field), func(i int) bool {
+		return int(Field[i].Number) >= needle
+	})
 
+	if Field[idx].Number == needle && Field[idx].Votes > 0 {
+
+		Field[idx].CrossedOut = true
+		VotesLeft += Field[idx].Votes
+		Field[idx].Votes = 0
+
+	} else if Field[idx].Number == needle {
+		Field[idx].CrossedOut = !Field[idx].CrossedOut
+	}
+	Rot(Field[idx].List)
+	Braun()
+}
+
+func VoteList(s string) {
 	sort.Slice(Lists, func(i, j int) bool {
 		return Lists[i].Shorthand <= Lists[j].Shorthand
 	})
 
-	needle := cast
+	needle := s
 	idx := sort.Search(len(Lists), func(i int) bool {
 		return string(Lists[i].Shorthand) >= needle
 	})
 
-	if Lists[idx].Shorthand == needle && !Voted_list {
-		Lists[idx].List_vote = true
-		Voted_list = true
-		Voted_party = Lists[idx].Shorthand
-		fmt.Println("Sie haben ein Listenkreuz bei", Lists[idx].Name, "gesetzt.")
+	if s == VotedParty {
+		VotedParty = ""
+		VotedList = false
+		Lists[idx].ListVote = false
 
-	} else if Lists[idx].Shorthand == needle && Voted_list {
-		fmt.Println("Sie haben bereits bei", Voted_party, "ein Listenkreuz gesetzt. Was möchten Sie tun?")
-		fmt.Println("Drücken Sie [F], um das Kreuz bei", Voted_party, "zu löschen und statt dessen bei", Lists[idx].Shorthand, "zu setzen.")
-		fmt.Println("Drücken Sie [A], um den Vorgang abzubrechen.")
-		var lv string
-		fmt.Scanln(&lv)
+	} else if Lists[idx].Shorthand == needle && !VotedList {
+		Lists[idx].ListVote = true
+		VotedList = true
+		VotedParty = Lists[idx].Shorthand
 
-		if lv == "F" || lv == "f" {
+	} else if Lists[idx].Shorthand == needle && VotedList {
+		Lists[idx].ListVote = true
+		t := Lists[idx].Shorthand
 
-			Lists[idx].List_vote = true
-			t := Lists[idx].Shorthand
+		idx2 := sort.Search(len(Lists), func(i int) bool { //
+			return string(Lists[i].Shorthand) >= VotedParty //to be honest, I don't recall why I put this in
+		}) //
+		Lists[idx2].ListVote = false
+		VotedParty = t
 
-			idx2 := sort.Search(len(Lists), func(i int) bool {
-				return string(Lists[i].Shorthand) >= Voted_party
-			})
-			Lists[idx2].List_vote = false
-			Voted_party = t
-		}
 	}
+	Rot(Lists[idx].Number)
+	Braun()
+}
 
+func Reset() {
+	for i := range Field {
+		Field[i].Votes = 0
+		Field[i].CrossedOut = false
+	}
+	VotesLeft = AmountOfVotes
+	Braun()
+	Red.Objects = Red.Objects[:0]
 }
