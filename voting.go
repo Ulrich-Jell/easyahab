@@ -26,8 +26,9 @@ func PersonVote(needle int) {
 		VotesLeft += 3
 
 	}
-	Rot(Field[idx].List)
-	Braun()
+	DrawCandidates(Field[idx].List)
+	//Scroll.Refresh()
+	DrawHeading()
 
 }
 
@@ -43,8 +44,8 @@ func ReduceVote(needle int) {
 		Field[idx].Votes -= 1
 		VotesLeft += 1
 	}
-	Rot(Field[idx].List)
-	Braun()
+	DrawCandidates(Field[idx].List)
+	DrawHeading()
 }
 
 func CrossCandidateOut(needle int) {
@@ -64,8 +65,8 @@ func CrossCandidateOut(needle int) {
 	} else if Field[idx].Number == needle {
 		Field[idx].CrossedOut = !Field[idx].CrossedOut
 	}
-	Rot(Field[idx].List)
-	Braun()
+	DrawCandidates(Field[idx].List)
+	DrawHeading()
 }
 
 func VoteList(s string) {
@@ -99,8 +100,8 @@ func VoteList(s string) {
 		VotedParty = t
 
 	}
-	Rot(Lists[idx].Number)
-	Braun()
+	DrawCandidates(Lists[idx].Number)
+	DrawHeading()
 }
 
 func Reset() {
@@ -109,6 +110,6 @@ func Reset() {
 		Field[i].CrossedOut = false
 	}
 	VotesLeft = AmountOfVotes
-	Braun()
-	Red.Objects = Red.Objects[:0]
+	DrawHeading()
+	CandidateContainer.Objects = CandidateContainer.Objects[:0]
 }

@@ -16,9 +16,10 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var Red *fyne.Container
-var Blue *fyne.Container
-var Brown0 *fyne.Container
+var CandidateContainer *fyne.Container
+var PartyContainer *fyne.Container
+var HeadingContainer *fyne.Container
+var Scroll *fyne.Container
 
 var VotesLabel binding.Int
 var App fyne.App
@@ -27,15 +28,15 @@ var App fyne.App
 //functions, that are named after colors create or refresh these elements in the GUI
 //see Layout.png for a visual representation
 
-func Rot(l int) {
-	Red.Objects = Red.Objects[:0]
+func DrawCandidates(l int) {
+	CandidateContainer.Objects = CandidateContainer.Objects[:0]
 
-	Red.Add(widget.NewLabel("Listenplatz"))
-	Red.Add(widget.NewLabel("Name"))
-	Red.Add(widget.NewLabel("Stimmen"))
-	Red.Add(widget.NewLabel("Simme geben"))
-	Red.Add(widget.NewLabel("Stimmen reduzieren"))
-	Red.Add(widget.NewLabel("Von der Listenwahl ausgeschlossen"))
+	CandidateContainer.Add(widget.NewLabel("Listenplatz"))
+	CandidateContainer.Add(widget.NewLabel("Name"))
+	CandidateContainer.Add(widget.NewLabel("Stimmen"))
+	CandidateContainer.Add(widget.NewLabel("Simme geben"))
+	CandidateContainer.Add(widget.NewLabel("Stimmen reduzieren"))
+	CandidateContainer.Add(widget.NewLabel("Von der Listenwahl ausgeschlossen"))
 
 	for i := range Field {
 		if Field[i].List == l {
@@ -45,21 +46,21 @@ func Rot(l int) {
 			vs := strconv.Itoa(v)
 			t := Field[i].Name
 
-			Red.Add(widget.NewLabel(ns))
-			Red.Add(widget.NewLabel(t))
-			Red.Add(widget.NewLabel(vs))
-			Red.Add(widget.NewButton("+", func() {
+			CandidateContainer.Add(widget.NewLabel(ns))
+			CandidateContainer.Add(widget.NewLabel(t))
+			CandidateContainer.Add(widget.NewLabel(vs))
+			CandidateContainer.Add(widget.NewButton("+", func() {
 				PersonVote(n)
 			}))
-			Red.Add(widget.NewButton("-", func() {
+			CandidateContainer.Add(widget.NewButton("-", func() {
 				ReduceVote(n)
 			}))
 			if Field[i].CrossedOut {
-				Red.Add(widget.NewButton("Ja", func() {
+				CandidateContainer.Add(widget.NewButton("Ja", func() {
 					CrossCandidateOut(n)
 				}))
 			} else {
-				Red.Add(widget.NewButton("Nein", func() {
+				CandidateContainer.Add(widget.NewButton("Nein", func() {
 					CrossCandidateOut(n)
 				}))
 			}
@@ -68,11 +69,11 @@ func Rot(l int) {
 	}
 
 	if Lists[l-1].ListVote {
-		Red.Add(widget.NewButton("Liste wurde gewählt", func() {
+		CandidateContainer.Add(widget.NewButton("Liste wurde gewählt", func() {
 			VoteList(Lists[l-1].Shorthand)
 		}))
 	} else {
-		Red.Add(widget.NewButton("Liste wählen", func() {
+		CandidateContainer.Add(widget.NewButton("Liste wählen", func() {
 			fmt.Println(Lists[l-1].Shorthand)
 			VoteList(Lists[l-1].Shorthand)
 		}))
@@ -80,21 +81,21 @@ func Rot(l int) {
 
 }
 
-func Braun() {
-	Brown0.Objects = Brown0.Objects[:0]
+func DrawHeading() {
+	HeadingContainer.Objects = HeadingContainer.Objects[:0]
 
-	Brown0.Add(widget.NewLabel("Sie haben noch"))
-	Brown0.Add(widget.NewLabel(strconv.Itoa(VotesLeft)))
-	Brown0.Add(widget.NewLabel("Stimmen."))
-	Brown0.Add(widget.NewLabel("Listenwahl:"))
-	Brown0.Add(widget.NewLabel(VotedParty))
+	HeadingContainer.Add(widget.NewLabel("Sie haben noch"))
+	HeadingContainer.Add(widget.NewLabel(strconv.Itoa(VotesLeft)))
+	HeadingContainer.Add(widget.NewLabel("Stimmen."))
+	HeadingContainer.Add(widget.NewLabel("Listenwahl:"))
+	HeadingContainer.Add(widget.NewLabel(VotedParty))
 }
 
-func blue() {
+func drawPartyContainer() {
 	for i := range Lists {
 		n := Lists[i].Number
-		Blue.Add(widget.NewButton(Lists[i].Shorthand, func() {
-			Rot(n)
+		PartyContainer.Add(widget.NewButton(Lists[i].Shorthand, func() {
+			DrawCandidates(n)
 		}))
 
 	}
@@ -120,34 +121,34 @@ func main() {
 
 	Connecttoserver()
 
-	Red = container.NewGridWithColumns(6)
+	CandidateContainer = container.NewGridWithColumns(6)
 
-	Blue = container.NewGridWithColumns(1)
+	PartyContainer = container.NewGridWithColumns(1)
 
-	brown1 := widget.NewLabelWithStyle("Herzlich Willkommen zur Kommunalwahl 2025 der Stadt Fulda.", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	brown2 := widget.NewLabelWithStyle("Dieses Programm erstellt Ihren Stimmzettel und druckt ihn aus. Sie können beliebig viele Stimmzettel ausdrucken, jedoch nur einen in die Urne werfen. Es werden keine Daten gespeichert und es ist kein Rückschluss auf Ihre Person möglich!", fyne.TextAlignLeading, fyne.TextStyle{})
-	brown2.Wrapping = 3
-	Brown0 = container.NewGridWithColumns(3)
-	brown := container.NewVBox(brown1, brown2, Brown0)
+	headingContainer1 := widget.NewLabelWithStyle("Herzlich Willkommen zur Kommunalwahl 2025 in Lummerland.", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	headingContainer2 := widget.NewLabelWithStyle("Dieses Programm erstellt Ihren Stimmzettel und druckt ihn aus. Sie können beliebig viele Stimmzettel ausdrucken, jedoch nur einen in die Urne werfen. Es werden keine Daten gespeichert und es ist kein Rückschluss auf Ihre Person möglich!", fyne.TextAlignLeading, fyne.TextStyle{})
+	headingContainer2.Wrapping = 3
+	HeadingContainer = container.NewGridWithColumns(3)
+	HeadingContainer := container.NewVBox(headingContainer1, headingContainer2, HeadingContainer)
 
-	pink1 := widget.NewButton("Wahl Abschließen", func() {
+	bottomContainer1 := widget.NewButton("Wahl Abschließen", func() {
 		PrintOut()
 	})
-	pink2 := widget.NewButton("Von vorne Beginnen", func() {
+	bottomContainer2 := widget.NewButton("Von vorne Beginnen", func() {
 		Reset()
 	})
-	pink3 := widget.NewButton("Hilfe", func() {
+	bottomContainer3 := widget.NewButton("Hilfe", func() {
 		help(App)
 	})
-	pink := container.NewHBox(pink1, pink2, pink3)
+	bottomContainer := container.NewHBox(bottomContainer1, bottomContainer2, bottomContainer3)
 
-	blue()
-	Braun()
+	drawPartyContainer()
+	DrawHeading()
 
-	all := container.New(layout.NewBorderLayout(brown, pink, Blue, Red), brown, Blue, Red, pink)
-	scroll := container.NewScroll(all) //adds a container that scrolls everything
+	Scroll := container.NewScroll(CandidateContainer) //adds a container that scrolls everything
+	all := container.New(layout.NewBorderLayout(HeadingContainer, bottomContainer, PartyContainer, nil), HeadingContainer, PartyContainer, bottomContainer, Scroll)
 
-	w.SetContent(scroll)
+	w.SetContent(all)
 
 	w.Resize(fyne.NewSize(1366, 768))
 
