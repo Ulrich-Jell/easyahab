@@ -11,7 +11,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
@@ -21,12 +20,8 @@ var PartyContainer *fyne.Container
 var HeadingContainer *fyne.Container
 var Scroll *fyne.Container
 
-var VotesLabel binding.Int
+var ActiveParty string
 var App fyne.App
-
-//All Colors refer to specific Elements of the Layout
-//functions, that are named after colors create or refresh these elements in the GUI
-//see Layout.png for a visual representation
 
 func DrawCandidates(l int) {
 	CandidateContainer.Objects = CandidateContainer.Objects[:0]
@@ -37,6 +32,9 @@ func DrawCandidates(l int) {
 	CandidateContainer.Add(widget.NewLabel("Simme geben"))
 	CandidateContainer.Add(widget.NewLabel("Stimmen reduzieren"))
 	CandidateContainer.Add(widget.NewLabel("Von der Listenwahl ausgeschlossen"))
+
+	ActiveParty = Lists[l-1].Name
+	fmt.Println(ActiveParty)
 
 	for i := range Field {
 		if Field[i].List == l {
@@ -86,7 +84,7 @@ func DrawHeading() {
 
 	HeadingContainer.Add(widget.NewLabel("Sie haben noch"))
 	HeadingContainer.Add(widget.NewLabel(strconv.Itoa(VotesLeft)))
-	HeadingContainer.Add(widget.NewLabel("Stimmen."))
+	HeadingContainer.Add(widget.NewLabel("Stimmen"))
 	HeadingContainer.Add(widget.NewLabel("Listenwahl:"))
 	HeadingContainer.Add(widget.NewLabel(VotedParty))
 }

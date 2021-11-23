@@ -28,7 +28,7 @@ func PrintOut() {
 
 	defer f.Close()
 
-	fmt.Fprintln(f, "Stimmzettel für die Kommunalwahl der Stadt Lummerland vom 31.04.2002")
+	fmt.Fprintln(f, "Stimmzettel für die Kommunalwahl der Stadt Lummerland vom 31.04.2025")
 	fmt.Fprintln(f, "Wahllokal 173", "Antoniusheim")
 	fmt.Fprintln(f, "_______________________________________________________________")
 	fmt.Fprintln(f, "Per listenkreuz gewählte Partei oder Wählergruppe:", VotedParty)
