@@ -5,7 +5,6 @@ package main
 //fyne has a possibility to create costum layouts, but I could not figure out how
 
 import (
-	"fmt"
 	"strconv"
 
 	"fyne.io/fyne/v2"
@@ -33,20 +32,16 @@ func DrawCandidates(l int) {
 	CandidateContainer.Add(widget.NewLabel("Stimmen reduzieren"))
 	CandidateContainer.Add(widget.NewLabel("Von der Listenwahl ausgeschlossen"))
 
-	ActiveParty = Lists[l-1].Name
-	fmt.Println(ActiveParty)
+	// ActiveParty = Lists[l-1].Name
+	// fmt.Println(ActiveParty)
 
 	for i := range Field {
 		if Field[i].List == l {
 			n := Field[i].Number
-			ns := strconv.Itoa(n)
-			v := Field[i].Votes
-			vs := strconv.Itoa(v)
-			t := Field[i].Name
 
-			CandidateContainer.Add(widget.NewLabel(ns))
-			CandidateContainer.Add(widget.NewLabel(t))
-			CandidateContainer.Add(widget.NewLabel(vs))
+			CandidateContainer.Add(widget.NewLabel(strconv.Itoa(Field[i].Number)))
+			CandidateContainer.Add(widget.NewLabel(Field[i].Name))
+			CandidateContainer.Add(widget.NewLabel(strconv.Itoa(Field[i].Votes)))
 			CandidateContainer.Add(widget.NewButton("+", func() {
 				PersonVote(n)
 			}))
@@ -72,7 +67,7 @@ func DrawCandidates(l int) {
 		}))
 	} else {
 		CandidateContainer.Add(widget.NewButton("Liste wählen", func() {
-			fmt.Println(Lists[l-1].Shorthand)
+			//fmt.Println(Lists[l-1].Shorthand)
 			VoteList(Lists[l-1].Shorthand)
 		}))
 	}

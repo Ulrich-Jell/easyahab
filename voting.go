@@ -2,33 +2,41 @@ package main
 
 import (
 	"sort"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 )
 
 func PersonVote(needle int) {
-	sort.Slice(Field, func(i, j int) bool { // I don't really know how this works.
-		return Field[i].Number <= Field[j].Number // It just does.
-	}) //
-	idx := sort.Search(len(Field), func(i int) bool { //
-		return int(Field[i].Number) >= needle //
-	}) //
+	if VotesLeft == 0 {
+		noVotesLeft(App)
+	} else {
+		sort.Slice(Field, func(i, j int) bool { // I don't really know how this works.
+			return Field[i].Number <= Field[j].Number // It just does.
+		}) //
+		idx := sort.Search(len(Field), func(i int) bool { //
+			return int(Field[i].Number) >= needle //
+		}) //
 
-	if Field[idx].Number == needle && Field[idx].CrossedOut {
-		Field[idx].CrossedOut = false
-		Field[idx].Votes = 1
-		VotesLeft -= 1
+		if Field[idx].Number == needle && Field[idx].CrossedOut {
+			Field[idx].CrossedOut = false
+			Field[idx].Votes = 1
+			VotesLeft -= 1
 
-	} else if Field[idx].Number == needle && Field[idx].Votes < 3 {
-		Field[idx].Votes += 1
-		VotesLeft -= 1
+		} else if Field[idx].Number == needle && Field[idx].Votes < 3 {
+			Field[idx].Votes += 1
+			VotesLeft -= 1
 
-	} else if Field[idx].Number == needle && Field[idx].Votes == 3 {
-		Field[idx].Votes = 0
-		VotesLeft += 3
+		} else if Field[idx].Number == needle && Field[idx].Votes == 3 {
+			Field[idx].Votes = 0
+			VotesLeft += 3
 
+		}
+		DrawCandidates(Field[idx].List)
+		//Scroll.Refresh()
+		DrawHeading()
 	}
-	DrawCandidates(Field[idx].List)
-	//Scroll.Refresh()
-	DrawHeading()
 
 }
 
@@ -112,4 +120,21 @@ func Reset() {
 	VotesLeft = AmountOfVotes
 	DrawHeading()
 	CandidateContainer.Objects = CandidateContainer.Objects[:0]
+}
+
+func noVotesLeft(a fyne.App) {
+
+	win := a.NewWindow("Alle Stimmen vergeben")
+
+	t := widget.NewLabelWithStyle("Sie haben bereits alle Stimmen vergeben. Bitte reduzieren Sie zuerst die Stimmen bei einem*r anderen Kandidat*in.", fyne.TextAlignLeading, fyne.TextStyle{})
+	t.Wrapping = 3
+
+	q := widget.NewButton("Schließen", func() {
+		win.Close()
+	})
+
+	win.SetContent(container.NewVBox(t, q))
+
+	win.Show()
+
 }
